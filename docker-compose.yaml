@@ -1,0 +1,111 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:13
+    container_name: db
+    environment:
+      POSTGRES_DB: moodle
+      POSTGRES_USER: moodle
+      POSTGRES_PASSWORD: moodlepass
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - moodle_network
+
+  moodle:
+    build: .
+    container_name: moodle
+    ports:
+      - "9000:9000"
+    environment:
+      - MOODLE_DATABASE_TYPE=pgsql
+      - MOODLE_DATABASE_HOST=db
+      - MOODLE_DATABASE_PORT=5432
+      - MOODLE_DATABASE_NAME=moodle
+      - MOODLE_DATABASE_USER=moodle
+      - MOODLE_DATABASE_PASSWORD=moodlepass
+    volumes:
+      - moodledata:/var/www/html
+      - ./config.php:/var/www/html/config.php
+      - ./moodle_themes/adaptable:/var/www/html/theme/adaptable
+      - ./local/adapted:/var/www/html/local/adapted
+      - ./blocks/multimodal_generator:/var/www/html/blocks/multimodal_generator
+    networks:
+      - moodle_network
+  
+  recommender:
+    build:
+      context: ./local/adapted/recommender
+      dockerfile: Dockerfile
+    container_name: recommender
+    environment:
+      DB_USER: moodle
+      DB_PASS: moodlepass
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: moodle
+      RECOMMENDER_MODE: update
+    volumes:
+      - ./local/adapted/recommender:/app
+      - ./config.php:/var/www/html/config.php
+    ports:
+      - "5000:5000" 
+    restart: always
+    depends_on:
+      - moodle
+      - db
+    networks:
+      - moodle_network
+
+  multimodal:
+    build:
+      context: ./local/adapted/multimodal
+      dockerfile: Dockerfile
+    container_name: multimodal
+    environment:
+      - MOODLE_TOKEN=0b6cb8f97ed2558b373e2fa6f370ac85
+      - TRANSFORMERS_CACHE=/app/multimodal/bart-large-cnn
+      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+    volumes:
+      - ./local/adapted/multimodal:/app/multimodal
+      - ./config.php:/var/www/html/config.php
+      - model_cache:/app/multimodal/model_cache
+    ports:
+      - "5001:5001"
+    restart: always
+    depends_on:
+      - moodle
+      - db
+      - nginx
+    networks:
+      - moodle_network
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"  
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl  
+      - ./log/nginx:/var/log/nginx
+      - moodledata:/var/www/html:ro
+      - ./local/adapted:/var/www/html/local/adapted
+      - ./blocks/multimodal_generator:/var/www/html/blocks/multimodal_generator
+    depends_on:
+      - moodle
+    networks:
+      - moodle_network
+
+volumes:
+  pgdata:
+  moodledata:
+  model_cache:
+
+networks:
+  moodle_network:
+    name: moodle_network

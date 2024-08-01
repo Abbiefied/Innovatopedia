@@ -1,0 +1,12 @@
+<div id="local-adapted-recommendations" class="local-adapted-recommendations">
+    <h3>{{heading}}</h3>
+    <div class="recommendation-cards">
+        {{#recommendations}}
+            <div class="recommendation-card">
+                <h4>{{title}}</h4>
+                <p>{{description}}</p>
+                <a href="{{config.wwwroot}}/mod/{{type}}/view.php?id={{cmid}}" class="btn btn-primary">{{#str}}viewcontent, local_adapted{{/str}}</a>
+            </div>
+        {{/recommendations}}
+    </div>
+</div>

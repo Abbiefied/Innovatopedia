@@ -1,0 +1,97 @@
+- .venv
+- blocks
+  - multimodal_generator
+    - block_multimodal_generator.php
+    - db
+      - access.php
+    - lang
+      - en
+        - block_multimodal_generator.php
+    - version.php
+- config.php
+- docker-compose.yaml
+- Dockerfile
+- local
+  - adapted
+    - chatbot.php
+    - classes
+      - output
+        - renderer.php
+      - task
+        - update_recommender_model.php
+    - db
+      - access.php
+      - install.php
+      - install.xml
+      - tasks.php
+      - upgrade.php
+    - get_username.php
+    - index.php
+    - lang
+      - en
+        - local_adapted.php
+    - lib
+      - chatbot.php
+    - lib.php
+    - locallib.php
+    - multimodal
+      - app.py
+      - bart-large-cnn
+        - config.json
+        - generation_config.json
+        - merges.txt
+        - model.safetensors
+        - special_tokens_map.json
+        - tokenizer.json
+        - tokenizer_config.json
+        - version.txt
+        - vocab.json
+      - Dockerfile
+      - download.php
+      - download_models.py
+      - model_cache
+      - moodle_api.py
+      - multimodal_conversion.py
+      - multimodal_generation.php
+      - requirements.txt
+      - upload_content.php
+    - pix
+      - chat_icon.png
+    - recommender
+      - app.py
+      - Dockerfile
+      - generate.py
+      - moodle_recommender_model.pkl
+      - recommender.py
+      - requirements.txt
+    - scripts
+      - chatbot.js
+      - multimodal_generation.js
+    - settings.php
+    - styles
+      - styles.css
+    - templates
+      - chatbot.mustache
+      - multimodal_generation.mustache
+      - recommender.mustache
+    - version.php
+- log
+  - nginx
+    - access.log
+    - error.log
+- moodle_themes
+  - adaptable
+- nginx
+  - Dockerfile
+  - k8s
+    - nginx_deployment.yaml
+    - nginx_service.yaml
+  - nginx.conf
+  - ssl
+    - nginx.crt
+    - nginx.key
+- project_structure.text
+- volumes
+  - moodle_data
+  - pgdata
+- www.conf
