@@ -20,11 +20,11 @@ services:
       - "9000:9000"
     environment:
       - MOODLE_DATABASE_TYPE=pgsql
-      - MOODLE_DATABASE_HOST=db
-      - MOODLE_DATABASE_PORT=5432
-      - MOODLE_DATABASE_NAME=moodle
-      - MOODLE_DATABASE_USER=moodle
-      - MOODLE_DATABASE_PASSWORD=moodlepass
+      - MOODLE_DATABASE_HOST=$MOODLE_DATABASE_HOST
+      - MOODLE_DATABASE_PORT=$MOODLE_DATABASE_PORT
+      - MOODLE_DATABASE_NAME=$MOODLE_DATABASE_NAME
+      - MOODLE_DATABASE_USER=$MOODLE_DATABASE_USER
+      - MOODLE_DATABASE_PASSWORD=$MOODLE_DATABASE_PASSWORD
     volumes:
       - moodledata:/var/www/html
       - ./config.php:/var/www/html/config.php

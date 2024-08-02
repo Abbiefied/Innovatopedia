@@ -1,5 +1,5 @@
 <?php
-require_once('../../config.php');
+require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/local/adapted/lib/chatbot.php');
 
 require_login();
@@ -15,13 +15,9 @@ header('Content-Type: application/json');
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
 
-    // Debugging: Check the received input
-    error_log('Received input: ' . print_r($input, true));
-
     $message = $input['message'] ?? '';
     $username = $input['username'] ?? '';
     $context = $input['context'] ?? [];
-    
 
     // Validate input
     if (empty($message)) {

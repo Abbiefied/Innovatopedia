@@ -16,7 +16,13 @@ class local_adapted_chatbot {
             'messages' => [
                 [
                     'role' => 'system',
-                    'content' => "You are a helpful assistant for a Moodle learning management system. You can provide information about courses, assignments, grades, and deadlines. When asked about specific courses, modules, content, assignments, grades, or deadlines, first extract the relevant information from the user's query, then use the provided functions to fetch the required data from Moodle before answering. Always consider the user's context and provide personalized responses.For queries that are not related to the Moodle context, use OpenAI gpt"
+                    'content' => "You are a helpful assistant for a Moodle learning management system. 
+                                You can provide information about courses, assignments, grades, and deadlines. 
+                                When asked about specific courses, modules, content, assignments, grades, 
+                                or deadlines, first extract the relevant information from the user's query, 
+                                then use the provided functions to fetch the required data from Moodle before 
+                                answering. Always consider the user's context and provide personalized responses.
+                                For queries that are not related to the Moodle context, use OpenAI gpt"
                 ],
                 [
                     'role' => 'user',
@@ -133,7 +139,7 @@ class local_adapted_chatbot {
             error_log('Error decoding JSON response: ' . json_last_error_msg());
             return 'Error decoding response';
         }
-
+        
         $message = $response['choices'][0]['message'];
         
         if (isset($message['function_call'])) {
