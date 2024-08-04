@@ -167,6 +167,10 @@ class local_adapted_chatbot {
     private static function call_moodle_function($function_name, $arguments) {
         global $DB;
 
+        if ($function_name === 'get_user_assignments') {
+            // Debugging statement
+            error_log('call_moodle_function: get_user_assignments called with params: ' . print_r($params, true));
+        }
         switch ($function_name) {
             case 'get_course_info':
                 $course = $DB->get_record('course', ['fullname' => $arguments['course_name']], '*', MUST_EXIST);

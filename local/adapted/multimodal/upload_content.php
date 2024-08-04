@@ -144,11 +144,11 @@ function add_file_to_course_page($courseid, $file, $section) {
     $resource->revision = 1;
     $resource->timemodified = time();
 
-    // Determine the module type based on file extension
-    $extension = pathinfo($file->get_filename(), PATHINFO_EXTENSION);
-    $moduletype = ($extension == 'mp4') ? 'video' : 'resource';
+    // // Determine the module type based on file extension
+    // $extension = pathinfo($file->get_filename(), PATHINFO_EXTENSION);
+    // $moduletype = ($extension == 'mp4') ? 'video' : 'resource';
     
-    $module = $DB->get_record('modules', array('name' => $moduletype), '*', MUST_EXIST);
+    $module = $DB->get_record('modules', array('name' => 'resource'), '*', MUST_EXIST);
     $resource->module = $module->id;
 
     $resource->id = $DB->insert_record('resource', $resource);

@@ -73,11 +73,11 @@ $(document).ready(function() {
                 if (response.success) {
                     $('#progress-bar').width(response.progress + '%').text(response.progress + '%');
                     
-                    if (response.progress < 40) {
+                    if (response.progress < 26) {
                         $('#progress-status').text('Generating audio...');
-                    } else if (response.progress == 40) {
+                    } else if (response.progress == 26) {
                         $('#progress-status').text('Generating slides... This may take several minutes.');
-                    } else if (response.progress > 40) {
+                    } else if (response.progress > 26) {
                         $('#progress-status').text('Generating video...');
                     }
             

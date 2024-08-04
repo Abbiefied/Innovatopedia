@@ -25,6 +25,13 @@ RUN pip install psycopg2-binary
 
 RUN apt-get install -y ca-certificates
 
+RUN pip install Pillow openai
+
+RUN pip install opencv-python
+
+RUN apt-get update
+RUN apt install -y libgl1-mesa-glx
+
 # Copy the rest of the application code into the container
 COPY . /app/multimodal
 

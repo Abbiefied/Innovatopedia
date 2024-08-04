@@ -108,12 +108,25 @@ def process_job(job_id, input_text, generate_audio, generate_slides, generate_vi
             app.logger.info(f"Job {job_id}: Generating video")
             video_file = os.path.join(BASE_DIR, f"video_{int(time.time())}.mp4")
             try:
-                generate_video_from_text(input_text, video_file)
-                if os.path.exists(video_file):
-                    files.append(video_file)
-                    app.logger.info(f"Job {job_id}: Video file saved at {video_file}")
-                else:
-                    app.logger.error(f"Job {job_id}: Failed to save video file at {video_file}")
+                # if summary is None and generate_slides:
+                #     # If slides weren't generated but we need a summary, generate it now
+                #     summary = generate_slides_from_text(input_text, None)
+                # elif summary is None:
+                #     # If we don't have a summary at all, use the full text
+                #     summary = input_text
+                
+                audio_file = next((f for f in files if f.endswith('.mp3')), None)
+                if audio_file:
+                    generate_video_from_text(input_text, audio_file, video_file)
+                    if os.path.exists(video_file):    
+                        generate_video_from_text(input_text, audio_file, video_file)
+                        if os.path.exists(video_file):
+                            files.append(video_file)
+                            app.logger.info(f"Job {job_id}: Video file saved at {video_file}")
+                        else:
+                            app.logger.error(f"Job {job_id}: Failed to save video file at {video_file}")
+                    else:
+                        app.logger.error(f"Job {job_id}: No audio file found for video generation")
             except Exception as e:
                 app.logger.error(f"Job {job_id}: Error generating video - {str(e)}")
             
