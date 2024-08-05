@@ -99,18 +99,31 @@ $(document).ready(function() {
     }
 
     function conversionComplete(response) {
+        console.log("Conversion complete. Response:", response);
         $('#progress-container').hide();
         $('#status-message').html('Conversion complete').show();
         $('#progress-status').text('');
-        if (response.files && response.files.length > 0) {
+        
+        if (response.file_urls && response.file_urls.length > 0) {
+            console.log("File URLs found:", response.file_urls);
+            var fileList = '';
+            response.file_urls.forEach(function(url, index) {
+                fileList += '<li><a href="' + url + '" target="_blank">File ' + (index + 1) + '</a></li>';
+            });
+            $('#result-files').html('<ul>' + fileList + '</ul>');
+            $('#result-links').show();
+        } else if (response.files && response.files.length > 0) {
+            console.log("Files found, but no URLs:", response.files);
             $('#result-files').html('Generated files: ' + response.files.join(', '));
             $('#result-links').show();
             $('#download-btn').attr('data-files', response.files.join(','));
             $('#upload-btn').attr('data-job-id', M.local_adapted.currentJobId);
             $('#upload-btn').attr('data-files', response.files.join(','));
         } else {
+            console.log("No files or URLs found in the response");
             $('#status-message').html('Conversion complete, but no files were generated.').show();
         }
+        
         $('#convert-btn').prop('disabled', false);
         conversionInProgress = false;
     }

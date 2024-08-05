@@ -29,55 +29,10 @@ def convert_text_to_audio(text, audio_file):
     tts = gTTS(text=text, lang='en')
     tts.save(audio_file)
 
-# def generate_slides_from_text(text, slides_file):
-#     logging.debug("Starting slides conversion")
-    
-#     # model_path = '/app/multimodal/bart-large-cnn'
-#     model_path = './bart-large-cnn'
-    
-#     try:
-#         logging.debug(f"Current working directory: {os.getcwd()}")
-#         # logging.debug(f"Contents of /app: {os.listdir('/app')}")
-#         # logging.debug(f"Contents of model path: {os.listdir(model_path)}")
-        
-#         logging.debug(f"Loading tokenizer from: {model_path}")
-#         tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
-#         logging.debug("Tokenizer loaded successfully")
-        
-#         logging.debug(f"Loading model from: {model_path}")
-#         model = AutoModelForSeq2SeqLM.from_pretrained(model_path, local_files_only=True)
-#         logging.debug("Model loaded successfully")
-        
-#         summarizer = pipeline("summarization", model=model, tokenizer=tokenizer)
-        
-#         summary = summarizer(text, max_length=100, min_length=30, do_sample=False)[0]['summary_text']
-        
-#         prs = Presentation()
-#         slide_layout = prs.slide_layouts[1]  # Title and Content layout
-#         slide = prs.slides.add_slide(slide_layout)
-#         title = slide.shapes.title
-#         content = slide.placeholders[1]
-
-#         title.text = "Summary Slide"
-#         content.text = summary
-
-#         prs.save(slides_file)
-#         logging.debug("Slides generated successfully")
-#         return summary  # Return the summary
-#     except Exception as e:
-#         logging.error(f"Error in generate_slides: {str(e)}")
-#         logging.error(f"Current working directory: {os.getcwd()}")
-#         # logging.error(f"Contents of /app: {os.listdir('/app')}")
-#         # if os.path.exists('/app/model_cache'):
-#         #     logging.error(f"Contents of /app/model_cache: {os.listdir('/app/model_cache')}")
-#         raise
-    
 def generate_slides_from_text(text, slides_file):
     logging.debug("Starting slides conversion")
     
-    # model_path = './bart-large-cnn'
-    model_path = '/app/multimodal/bart-large-cnn'
-    
+    model_path = '/app/multimodal/bart-large-cnn'   
     try:
         logging.debug(f"Current working directory: {os.getcwd()}")
         logging.debug(f"Loading tokenizer from: {model_path}")
@@ -91,7 +46,7 @@ def generate_slides_from_text(text, slides_file):
         summarizer = pipeline("summarization", model=model, tokenizer=tokenizer)
         
         # Split the text into chunks
-        max_chunk_length = 1000  # Adjust this value as needed
+        max_chunk_length = 1000  
         text_chunks = textwrap.wrap(text, max_chunk_length)
         
         prs = Presentation()
@@ -130,7 +85,6 @@ def generate_image(prompt):
             n=1,
         )
         logging.debug(f"Response structure: {response}")
-        # Assuming the response object has a method or attribute to get the image URL
         image_url = response.data[0].url
         response = requests.get(image_url)
         img = Image.open(BytesIO(response.content))
@@ -161,14 +115,13 @@ def generate_video_from_text(text, audio_file, video_file):
     # Create a black background image
     background = np.zeros((height, width, 3), dtype=np.uint8)
 
-    # Use a default font (you might need to specify the full path to a .ttf file)
     try:
         font = ImageFont.truetype("arial.ttf", 40)
     except IOError:
         font = ImageFont.load_default()
 
     # Wrap text to fit screen width
-    wrapped_lines = textwrap.wrap(text, width=35)
+    wrapped_lines = textwrap.wrap(text, width=40)
     total_lines = len(wrapped_lines)
     line_duration = duration / total_lines
 

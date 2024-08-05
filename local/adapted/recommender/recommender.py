@@ -327,7 +327,6 @@ class MoodleRecommender:
             {'content_id': 3, 'score': 0.8, 'type': 'resource', 'title': 'Default Course 3', 'description': 'This is a third default recommendation'}
         ])
 
-
     def train_models(self):
         self.tune_hyperparameters()
         self.train_cf_model()
@@ -391,7 +390,7 @@ if __name__ == "__main__":
         logging.info("Starting model update with hyperparameter tuning")
         recommender.load_data()
         recommender.preprocess_data()
-        recommender.train_models()  # This now includes hyperparameter tuning
+        recommender.train_models() 
         recommender.save_model('moodle_recommender_model.pkl')
         logging.info(f"Model updated and saved successfully. Course content size: {len(recommender.course_content)}")
         print(f"Model file size: {os.path.getsize('moodle_recommender_model.pkl')} bytes")

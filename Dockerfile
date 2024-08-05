@@ -49,5 +49,15 @@ RUN docker-php-ext-enable opcache && \
     echo "opcache.revalidate_freq=60" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini && \
     echo "opcache.fast_shutdown=1" >> /usr/local/etc/php/conf.d/docker-php-ext-opcache.ini
 
+# Create and set permissions for the shared temp directory
+RUN mkdir -p /var/www/moodledata/temp/multimodal_files && \
+    chown -R www-data:www-data /var/www/moodledata/temp/multimodal_files && \
+    chmod -R 777 /var/www/moodledata/temp/multimodal_files
+
+# Add these lines near the end of your Moodle Dockerfile, before the CMD instruction
+RUN mkdir -p /var/www/moodledata/temp/filestorage && \
+    chown -R www-data:www-data /var/www/moodledata && \
+    chmod -R 0777 /var/www/moodledata
+
 # Expose port 9000 for PHP-FPM
 EXPOSE 9000
