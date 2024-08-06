@@ -6,6 +6,7 @@ from multimodal_conversion import convert_text_to_audio, generate_slides_from_te
 import time
 import json
 import threading
+import tempfile
 import re
 import os
 import logging
@@ -28,7 +29,10 @@ def get_db_connection():
     return create_engine(f"postgresql://{dbuser}:{dbpass}@{dbhost}/{dbname}")
 
 # Define a base directory for file storage
-BASE_DIR = os.getcwd()
+# BASE_DIR = os.getcwd()
+
+TEMP_DIR = '/var/www/moodledata/temp/multimodal_files'
+os.makedirs(TEMP_DIR, exist_ok=True)
 
 def process_job(job_id, input_text, generate_audio, generate_slides, generate_video):
     app.logger.debug(f"Starting job processing: {job_id}")
@@ -54,7 +58,7 @@ def process_job(job_id, input_text, generate_audio, generate_slides, generate_vi
 
         if generate_audio:
             app.logger.info(f"Job {job_id}: Generating audio")
-            audio_file = os.path.join(BASE_DIR, f"audio_{int(time.time())}.mp3")
+            audio_file = os.path.join(TEMP_DIR, f"audio_{int(time.time())}.mp3")
             try:
                 convert_text_to_audio(input_text, audio_file)
                 if os.path.exists(audio_file):
@@ -78,7 +82,7 @@ def process_job(job_id, input_text, generate_audio, generate_slides, generate_vi
 
         if generate_slides:
             app.logger.debug(f"Job {job_id}: Generating slides")
-            slides_file = os.path.join(BASE_DIR, f"slides_{int(time.time())}.pptx")
+            slides_file = os.path.join(TEMP_DIR, f"slides_{int(time.time())}.pptx")
             try:
                 if callable(generate_slides_from_text):
                     generate_slides_from_text(input_text, slides_file)
@@ -106,14 +110,27 @@ def process_job(job_id, input_text, generate_audio, generate_slides, generate_vi
             
         if generate_video:
             app.logger.info(f"Job {job_id}: Generating video")
-            video_file = os.path.join(BASE_DIR, f"video_{int(time.time())}.mp4")
+            video_file = os.path.join(TEMP_DIR, f"video_{int(time.time())}.mp4")
             try:
-                generate_video_from_text(input_text, video_file)
-                if os.path.exists(video_file):
-                    files.append(video_file)
-                    app.logger.info(f"Job {job_id}: Video file saved at {video_file}")
-                else:
-                    app.logger.error(f"Job {job_id}: Failed to save video file at {video_file}")
+                # if summary is None and generate_slides:
+                #     # If slides weren't generated but we need a summary, generate it now
+                #     summary = generate_slides_from_text(input_text, None)
+                # elif summary is None:
+                #     # If we don't have a summary at all, use the full text
+                #     summary = input_text
+                
+                audio_file = next((f for f in files if f.endswith('.mp3')), None)
+                if audio_file:
+                    generate_video_from_text(input_text, audio_file, video_file)
+                    if os.path.exists(video_file):    
+                        generate_video_from_text(input_text, audio_file, video_file)
+                        if os.path.exists(video_file):
+                            files.append(video_file)
+                            app.logger.info(f"Job {job_id}: Video file saved at {video_file}")
+                        else:
+                            app.logger.error(f"Job {job_id}: Failed to save video file at {video_file}")
+                    else:
+                        app.logger.error(f"Job {job_id}: No audio file found for video generation")
             except Exception as e:
                 app.logger.error(f"Job {job_id}: Error generating video - {str(e)}")
             
@@ -141,9 +158,18 @@ def process_job(job_id, input_text, generate_audio, generate_slides, generate_vi
         session.rollback()
     finally:
         session.close()
+        
+def cleanup_old_files():
+    current_time = time.time()
+    for filename in os.listdir(TEMP_DIR):
+        file_path = os.path.join(TEMP_DIR, filename)
+        if os.path.isfile(file_path):
+            if current_time - os.path.getmtime(file_path) > 3600:  # 1 hour
+                os.remove(file_path)
 
 @app.route('/generate', methods=['POST'])
 def generate():
+    cleanup_old_files()
     data = request.json
     app.logger.debug(f"Received generate request: {data}")
     job_id = data.get('job_id')

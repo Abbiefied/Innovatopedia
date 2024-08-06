@@ -112,7 +112,7 @@ function handle_ajax_request() {
                 'success' => true,
                 'progress' => $job_details->progress,
                 'files' => json_decode($job_details->files, true),
-                'status' => $job_details->progress < 40 ? 'Generating audio' : ($job_details->progress == 40 ? 'Generating slides' : ($job_details->progress > 40 ? 'Generating video' : 'Complete'))
+                'status' => $job_details->progress < 26 ? 'Generating audio' : ($job_details->progress == 26 ? 'Generating slides' : ($job_details->progress == 66 ? 'Generating video' : 'Complete'))
             ];
             error_log("Job progress: " . $job_details->progress);
         } else {

@@ -14,6 +14,29 @@ function local_adapted_extend_navigation(global_navigation $navigation) {
     echo $PAGE->get_renderer('core')->render_from_template('local_adapted/chatbot', $templatecontext);
 }
 
+function local_adapted_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options=array()) {
+
+    // Check if the filearea is correct
+    if ($filearea !== 'multimodal_content') {
+        return false;
+    }
+
+    require_login($course);
+
+    $itemid = array_shift($args);
+    $filename = array_pop($args);
+    $filepath = $args ? '/'.implode('/', $args).'/' : '/';
+
+    $fs = get_file_storage();
+    $file = $fs->get_file($context->id, 'local_adapted', $filearea, $itemid, $filepath, $filename);
+    if (!$file) {
+        return false;
+    }
+
+    // Send the file
+    send_stored_file($file, 0, 0, $forcedownload, $options);
+}
+
 function local_adapted_extend_navigation_course($navigation, $course, $context) {
     global $PAGE, $USER;
     
