@@ -77,7 +77,7 @@ $(document).ready(function() {
                         $('#progress-status').text('Generating audio...');
                     } else if (response.progress == 26) {
                         $('#progress-status').text('Generating slides... This may take several minutes.');
-                    } else if (response.progress > 26) {
+                    } else if (response.progress == 66) {
                         $('#progress-status').text('Generating video...');
                     }
             
@@ -107,8 +107,8 @@ $(document).ready(function() {
         if (response.file_urls && response.file_urls.length > 0) {
             console.log("File URLs found:", response.file_urls);
             var fileList = '';
-            response.file_urls.forEach(function(url, index) {
-                fileList += '<li><a href="' + url + '" target="_blank">File ' + (index + 1) + '</a></li>';
+            response.file_urls.forEach(function(file) {
+                fileList += '<li><a href="' + file.url + '" target="_blank">' + file.name + '</a></li>';
             });
             $('#result-files').html('<ul>' + fileList + '</ul>');
             $('#result-links').show();

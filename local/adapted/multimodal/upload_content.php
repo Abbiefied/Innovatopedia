@@ -75,76 +75,53 @@ $fs = get_file_storage();
 
 // Process the files
 foreach ($files as $filename) {
-    $full_path = $TEMP_DIR . '/' . basename($filename);  // Use basename to avoid path duplication
+    $full_path = $TEMP_DIR . '/' . basename($filename);
     
-    // Determine the file type
-    $extension = pathinfo($filename, PATHINFO_EXTENSION);
-    $mimetype = mimeinfo('type', $filename);
-    
-    $file_record = array(
-        'contextid' => $context->id,
-        'component' => 'local_adapted',
-        'filearea'  => 'multimodal_content',
-        'itemid'    => $job_id,
-        'filepath'  => '/',
-        'filename'  => basename($filename),  // Use basename here as well
-        'mimetype'  => $mimetype
-    );
-
-    error_log("Attempting to access file: " . $full_path);
-    error_log("File exists: " . (file_exists($full_path) ? 'Yes' : 'No'));
-
-    try {
-        if (file_exists($full_path)) {
-            $file_obj = $fs->create_file_from_pathname($file_record, $full_path);
+    if (file_exists($full_path)) {
+        // Create the initial file in Moodle's file system
+        $file_record = array(
+            'contextid' => $context->id,
+            'component' => 'local_adapted',
+            'filearea'  => 'multimodal_content',
+            'itemid'    => $job_id,
+            'filepath'  => '/',
+            'filename'  => basename($filename),
+            'userid'    => $USER->id  // Add this line to associate the file with the current user
+        );
+        $file_obj = $fs->create_file_from_pathname($file_record, $full_path);
+        
+        if ($file_obj) {
+            // Add file to the course
+            $section = 0; // Assuming you want to add to the first section
+            $cm = add_file_to_course($courseid, $file_obj, $section);
             
-            if ($file_obj) {
+            if ($cm) {
+                $response['success'] = true;
+                $response['message'] .= "File " . basename($filename) . " added to course. ";
+                
                 // Generate URL for the file
-                $url = moodle_url::make_pluginfile_url(
-                    $context->id,
-                    'local_adapted',
-                    'multimodal_content',
-                    $file_obj->get_itemid(),
-                    $file_obj->get_filepath(),
-                    $file_obj->get_filename()
+                $url = new moodle_url('/mod/resource/view.php', array('id' => $cm->id));
+                $response['file_urls'][] = array(
+                    'name' => $file_obj->get_filename(),
+                    'url' => $url->out()
                 );
-                
-                // Add the URL to the response
-                $response['file_urls'][] = $url->out();
-                
-                // Add file to the course
-                $section = 0; // Assuming you want to add to the first section
-                $cm = add_file_to_course($courseid, $file_obj, $section);
-                
-                if ($cm) {
-                    $response['success'] = true;
-                    $response['message'] .= "File " . basename($filename) . " added to course. ";
-                } else {
-                    $response['message'] .= "Failed to add " . basename($filename) . " to course. ";
-                }
             } else {
-                $response['message'] .= "Failed to create file object for " . basename($filename) . ". ";
+                $response['message'] .= "Failed to add " . basename($filename) . " to course. ";
             }
         } else {
-            $response['message'] .= "File " . basename($filename) . " not found at $full_path. ";
-            error_log("File not found: $full_path");
+            $response['message'] .= "Failed to create file object for " . basename($filename) . ". ";
         }
-    } catch (Exception $e) {
-        error_log("Error processing file " . basename($filename) . ": " . $e->getMessage());
-        $response['message'] .= "Error processing " . basename($filename) . ". ";
+    } else {
+        $response['message'] .= "File " . basename($filename) . " not found at $full_path. ";
+        error_log("File not found: $full_path");
     }
 }
-
-// At the end of the file, before sending the JSON response
-error_log("Final response: " . json_encode($response));
-
-// Clean up temporary files
-foreach ($files as $filename) {
-    $full_path = $TEMP_DIR . '/' . $filename;
-    if (file_exists($full_path)) {
-        unlink($full_path);
-    }
-}
+// // Clean up temporary files
+// foreach ($files as $filename) {
+//     $full_path = $TEMP_DIR . '/' . $filename;
+//     if (file_exists($full_path)) {
+//         unlink($full_path);
+//     }
 
 error_log('Response: ' . json_encode($response));
 
@@ -153,12 +130,17 @@ echo json_encode($response);
 die();
 
 function add_file_to_course($courseid, $file, $section) {
-    global $DB;
+    global $DB, $CFG;
+
+    require_once($CFG->dirroot . '/course/lib.php');
+    require_once($CFG->dirroot . '/lib/resourcelib.php');
 
     $course = $DB->get_record('course', array('id' => $courseid), '*', MUST_EXIST);
+    $context = context_course::instance($courseid);
 
-    $module = $DB->get_record('modules', array('name' => 'resource'), '*', MUST_EXIST);
+    $fs = get_file_storage();
 
+    // Create resource instance
     $resource = new stdClass();
     $resource->course = $course->id;
     $resource->name = $file->get_filename();
@@ -166,42 +148,45 @@ function add_file_to_course($courseid, $file, $section) {
     $resource->introformat = FORMAT_HTML;
     $resource->tobemigrated = 0;
     $resource->legacyfiles = 0;
-    $resource->legacyfileslast = NULL;
-    $resource->display = 0;
+    $resource->legacyfileslast = null;
+    $resource->display = RESOURCELIB_DISPLAY_AUTO;
     $resource->displayoptions = serialize(array('printintro' => 1));
     $resource->filterfiles = 0;
     $resource->revision = 1;
     $resource->timemodified = time();
-    $resource->module = $module->id;
 
     $resource->id = $DB->insert_record('resource', $resource);
 
-    // Add file reference
-    $fs = get_file_storage();
-    $file_record = array(
-        'contextid' => context_module::instance($resource->id)->id,
-        'component' => 'mod_resource',
-        'filearea'  => 'content',
-        'itemid'    => 0,
-        'filepath'  => '/',
-        'filename'  => $file->get_filename()
-    );
-    $fs->create_file_from_storedfile($file_record, $file);
-
     // Add to course
+    $module = $DB->get_record('modules', array('name' => 'resource'), '*', MUST_EXIST);
     $cm = new stdClass();
     $cm->course = $course->id;
     $cm->module = $module->id;
     $cm->instance = $resource->id;
     $cm->section = $section;
-    $cm->added = time();
-    $cm->visible = 1;
+    $cm->modname = 'resource';
+    $cm->name = $resource->name;
 
     $cm->id = add_course_module($cm);
-
     course_add_cm_to_section($course, $cm->id, $section);
 
-    rebuild_course_cache($course->id, true);
+    // Prepare file record object
+    $fileinfo = array(
+        'contextid' => $context->id,
+        'component' => 'mod_resource',
+        'filearea' => 'content',
+        'itemid' => 0,
+        'filepath' => '/',
+        'filename' => $file->get_filename(),
+        'userid' => $file->get_userid()
+    );
+
+    // Copy file to mod_resource area
+    $fs->create_file_from_storedfile($fileinfo, $file);
+
+    // Trigger event for course module created
+    $event = \core\event\course_module_created::create_from_cm($cm);
+    $event->trigger();
 
     return $cm;
 }
