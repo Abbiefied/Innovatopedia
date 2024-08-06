@@ -73,7 +73,7 @@ def generate_slides_from_text(text, slides_file):
     
 # Set up OpenAI API key
 
-client = OpenAI(api_key ='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')
+client = OpenAI(api_key =os.getenv("OPENAI_API_KEY"))
 
 def generate_image(prompt):
     try:
