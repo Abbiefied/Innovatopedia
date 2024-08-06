@@ -12,7 +12,7 @@
 /local/adapted/multimodal/__pycache__
 /composer.json
 /composer.lock
-/env
+/.env
 
 # testing
 /coverage
