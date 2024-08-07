@@ -2,18 +2,15 @@ import sys
 from gtts import gTTS
 from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM 
 from PIL import Image, ImageDraw, ImageFont
-from moviepy.editor import VideoFileClip, AudioFileClip
+from moviepy.editor import VideoFileClip, AudioFileClip, CompositeVideoClip, TextClip
 from pptx import Presentation
+from pptx.util import Inches
 import cv2
 import numpy as np
 import logging
 import os
 import tempfile
 import textwrap
-import requests
-from io import BytesIO
-from openai import OpenAI
-
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -21,20 +18,22 @@ logging.basicConfig(level=logging.DEBUG)
 # Set the model cache directory
 os.environ['TRANSFORMERS_CACHE'] = '/app/multimodal/bart-large-cnn'
 
-#Generate Audio
 def convert_text_to_audio(text, audio_file):
     logging.debug("Starting audio conversion")
     tts = gTTS(text=text, lang='en')
     tts.save(audio_file)
 
-#Generate Slides
 def generate_slides_from_text(text, slides_file):
     logging.debug("Starting slides conversion")
     
-    model_path = '/app/multimodal/bart-large-cnn'   
-    model_path = '/app/multimodal/bart-large-cnn'   
+    # model_path = '/app/multimodal/bart-large-cnn'
+    model_path = './bart-large-cnn'
+    
     try:
         logging.debug(f"Current working directory: {os.getcwd()}")
+        # logging.debug(f"Contents of /app: {os.listdir('/app')}")
+        # logging.debug(f"Contents of model path: {os.listdir(model_path)}")
+        
         logging.debug(f"Loading tokenizer from: {model_path}")
         tokenizer = AutoTokenizer.from_pretrained(model_path, local_files_only=True)
         logging.debug("Tokenizer loaded successfully")
@@ -45,60 +44,28 @@ def generate_slides_from_text(text, slides_file):
         
         summarizer = pipeline("summarization", model=model, tokenizer=tokenizer)
         
-        # Split the text into chunks
-        max_chunk_length = 1000  
-        text_chunks = textwrap.wrap(text, max_chunk_length)
-        # Split the text into chunks
-        max_chunk_length = 1000  
-        text_chunks = textwrap.wrap(text, max_chunk_length)
+        summary = summarizer(text, max_length=100, min_length=30, do_sample=False)[0]['summary_text']
         
         prs = Presentation()
         slide_layout = prs.slide_layouts[1]  # Title and Content layout
-        
-        for i, chunk in enumerate(text_chunks):
-            logging.debug(f"Summarizing chunk {i+1}/{len(text_chunks)}")
-            summary = summarizer(chunk, max_length=100, min_length=30, do_sample=False)[0]['summary_text']
-            
-            slide = prs.slides.add_slide(slide_layout)
-            title = slide.shapes.title
-            content = slide.placeholders[1]
-            
-            title.text = f"Summary Slide {i+1}"
-            content.text = summary
-        
+        slide = prs.slides.add_slide(slide_layout)
+        title = slide.shapes.title
+        content = slide.placeholders[1]
+
+        title.text = "Summary Slide"
+        content.text = summary
+
         prs.save(slides_file)
         logging.debug("Slides generated successfully")
-        return [summarizer(chunk, max_length=100, min_length=30, do_sample=False)[0]['summary_text'] for chunk in text_chunks]  # Return the summaries
-        return [summarizer(chunk, max_length=100, min_length=30, do_sample=False)[0]['summary_text'] for chunk in text_chunks]  # Return the summaries
+        return summary  # Return the summary
     except Exception as e:
         logging.error(f"Error in generate_slides: {str(e)}")
         logging.error(f"Current working directory: {os.getcwd()}")
-        raise    
-        raise    
+        # logging.error(f"Contents of /app: {os.listdir('/app')}")
+        # if os.path.exists('/app/model_cache'):
+        #     logging.error(f"Contents of /app/model_cache: {os.listdir('/app/model_cache')}")
+        raise
     
-# Set up OpenAI API key for DALL-E
-client = OpenAI(api_key =os.environ.get("OPENAI_API_KEY"))
-
-#Generate Image
-def generate_image(prompt):
-    try:
-        response = client.images.generate(
-            model="dall-e-3",
-            prompt=prompt,
-            size="1024x1024",
-            quality="standard",
-            n=1,
-        )
-        logging.debug(f"Response structure: {response}")
-        image_url = response.data[0].url
-        response = requests.get(image_url)
-        img = Image.open(BytesIO(response.content))
-        return img
-    except Exception as e:
-        logging.error(f"Error generating image: {str(e)}")
-        return None
-    
-#Generate Video    
 def generate_video_from_text(text, audio_file, video_file):
     logging.debug("Starting video conversion")
     
@@ -114,59 +81,23 @@ def generate_video_from_text(text, audio_file, video_file):
     with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as temp_file:
         temp_video_file = temp_file.name
 
-
-    # Load audio file and get its duration
-    audio = AudioFileClip(audio_file)
-    duration = audio.duration
-
-    # Create a temporary file
-    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as temp_file:
-        temp_video_file = temp_file.name
-
     # Create a VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(temp_video_file, fourcc, fps, (width, height))
-
     out = cv2.VideoWriter(temp_video_file, fourcc, fps, (width, height))
 
     # Create a black background image
     background = np.zeros((height, width, 3), dtype=np.uint8)
 
-
+    # Use a default font (you might need to specify the full path to a .ttf file)
     try:
-        font = ImageFont.truetype("arial.ttf", 50)
+        font = ImageFont.truetype("arial.ttf", 40)
     except IOError:
         font = ImageFont.load_default()
 
     # Wrap text to fit screen width
-    wrapped_lines = textwrap.wrap(text, width=40)
+    wrapped_lines = textwrap.wrap(text, width=40)  # Adjust width as needed
     total_lines = len(wrapped_lines)
     line_duration = duration / total_lines
-
-    # Generate an image for every 5 lines of text
-    images = []
-    for i in range(0, total_lines, 5):
-        image_prompt = " ".join(wrapped_lines[i:i+5])
-        img = generate_image(image_prompt)
-        if img:
-            img = img.resize((width // 2, height // 2))
-            images.append(img)
-
-    for frame in range(int(fps * duration)):
-
-    # Wrap text to fit screen width
-    wrapped_lines = textwrap.wrap(text, width=40)
-    total_lines = len(wrapped_lines)
-    line_duration = duration / total_lines
-
-    # Generate an image for every 5 lines of text
-    images = []
-    for i in range(0, total_lines, 5):
-        image_prompt = " ".join(wrapped_lines[i:i+5])
-        img = generate_image(image_prompt)
-        if img:
-            img = img.resize((width // 2, height // 2))
-            images.append(img)
 
     for frame in range(int(fps * duration)):
         img = Image.fromarray(background)
@@ -176,16 +107,11 @@ def generate_video_from_text(text, audio_file, video_file):
         current_line_index = int(current_time / line_duration)
 
         # Display current line and next two lines
-        y_position = height // 2 - 60
+        y_position = height // 2 - 60  # Start position for text
         for i in range(current_line_index, min(current_line_index + 3, total_lines)):
             line = wrapped_lines[i]
-            draw.text((width // 4, y_position), line, font=font, fill=(255, 255, 255), anchor="mm")
-            y_position += 60
-
-        # Display the corresponding image
-        image_index = current_line_index // 5
-        if image_index < len(images):
-            img.paste(images[image_index], (width // 2, height // 4))
+            draw.text((width // 2, y_position), line, font=font, fill=(255, 255, 255), anchor="mm")
+            y_position += 60  # Move to next line position
 
         # Convert PIL Image to OpenCV format
         cv_img = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
@@ -203,6 +129,7 @@ def generate_video_from_text(text, audio_file, video_file):
         os.remove(temp_video_file)
 
     logging.debug("Video generated successfully")
+
     
 if __name__ == "__main__":
     logging.debug("Starting app.py")

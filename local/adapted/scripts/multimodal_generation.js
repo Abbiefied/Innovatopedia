@@ -76,9 +76,11 @@ $(document).ready(function() {
                     $('#progress-bar').width(response.progress + '%').text(response.progress + '%');
                     
                     if (response.progress < 26) {
+                    if (response.progress < 26) {
                         $('#progress-status').text('Generating audio...');
                     } else if (response.progress == 26) {
                         $('#progress-status').text('Generating slides... This may take several minutes.');
+                    } else if (response.progress == 66) {
                     } else if (response.progress == 66) {
                         $('#progress-status').text('Generating video...');
                     }

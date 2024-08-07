@@ -7,6 +7,7 @@ import time
 import json
 import threading
 import tempfile
+import tempfile
 import re
 import os
 import logging
@@ -59,6 +60,7 @@ def process_job(job_id, input_text, generate_audio, generate_slides, generate_vi
         if generate_audio:
             app.logger.info(f"Job {job_id}: Generating audio")
             audio_file = os.path.join(TEMP_DIR, f"audio_{int(time.time())}.mp3")
+            audio_file = os.path.join(TEMP_DIR, f"audio_{int(time.time())}.mp3")
             try:
                 convert_text_to_audio(input_text, audio_file)
                 if os.path.exists(audio_file):
@@ -86,6 +88,7 @@ def process_job(job_id, input_text, generate_audio, generate_slides, generate_vi
         #Generate Slides
         if generate_slides:
             app.logger.debug(f"Job {job_id}: Generating slides")
+            slides_file = os.path.join(TEMP_DIR, f"slides_{int(time.time())}.pptx")
             slides_file = os.path.join(TEMP_DIR, f"slides_{int(time.time())}.pptx")
             try:
                 if callable(generate_slides_from_text):
@@ -118,6 +121,7 @@ def process_job(job_id, input_text, generate_audio, generate_slides, generate_vi
         #Generate Video    
         if generate_video:
             app.logger.info(f"Job {job_id}: Generating video")
+            video_file = os.path.join(TEMP_DIR, f"video_{int(time.time())}.mp4")
             video_file = os.path.join(TEMP_DIR, f"video_{int(time.time())}.mp4")
             try:
                 # if summary is None and generate_slides:

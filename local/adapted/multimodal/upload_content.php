@@ -3,6 +3,8 @@ require_once(__DIR__ . '/../../../config.php');
 require_once($CFG->libdir.'/adminlib.php');
 require_once($CFG->libdir.'/filelib.php');
 require_once($CFG->libdir.'/moodlelib.php');
+require_once($CFG->libdir.'/filelib.php');
+require_once($CFG->libdir.'/moodlelib.php');
 
 error_log('upload_content.php was called');
 error_log('POST data: ' . print_r($_POST, true));
@@ -50,6 +52,8 @@ if (!$course) {
     die();
 }
 
+$response = array('success' => false, 'message' => '', 'file_urls' => array());
+$TEMP_DIR = '/var/www/moodledata/temp/multimodal_files';
 $response = array('success' => false, 'message' => '', 'file_urls' => array());
 $TEMP_DIR = '/var/www/moodledata/temp/multimodal_files';
 
@@ -169,6 +173,8 @@ function add_file_to_course($courseid, $file, $section) {
     $resource->legacyfiles = 0;
     $resource->legacyfileslast = null;
     $resource->display = RESOURCELIB_DISPLAY_AUTO;
+    $resource->legacyfileslast = null;
+    $resource->display = RESOURCELIB_DISPLAY_AUTO;
     $resource->displayoptions = serialize(array('printintro' => 1));
     $resource->filterfiles = 0;
     $resource->revision = 1;
@@ -178,6 +184,8 @@ function add_file_to_course($courseid, $file, $section) {
 
     // Add to course
     $module = $DB->get_record('modules', array('name' => 'resource'), '*', MUST_EXIST);
+    // Add to course
+    $module = $DB->get_record('modules', array('name' => 'resource'), '*', MUST_EXIST);
     $cm = new stdClass();
     $cm->course = $course->id;
     $cm->module = $module->id;
@@ -185,8 +193,29 @@ function add_file_to_course($courseid, $file, $section) {
     $cm->section = $section;
     $cm->modname = 'resource';
     $cm->name = $resource->name;
+    $cm->modname = 'resource';
+    $cm->name = $resource->name;
 
     $cm->id = add_course_module($cm);
+    course_add_cm_to_section($course, $cm->id, $section);
+
+    // Prepare file record object
+    $fileinfo = array(
+        'contextid' => $context->id,
+        'component' => 'mod_resource',
+        'filearea' => 'content',
+        'itemid' => 0,
+        'filepath' => '/',
+        'filename' => $file->get_filename(),
+        'userid' => $file->get_userid()
+    );
+
+    // Copy file to mod_resource area
+    $fs->create_file_from_storedfile($fileinfo, $file);
+
+    // Trigger event for course module created
+    $event = \core\event\course_module_created::create_from_cm($cm);
+    $event->trigger();
     course_add_cm_to_section($course, $cm->id, $section);
 
     // Prepare file record object

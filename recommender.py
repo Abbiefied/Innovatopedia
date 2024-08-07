@@ -4,10 +4,6 @@ import pandas as pd
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
-from sklearn.metrics import mean_squared_error, make_scorer
-from surprise.model_selection import GridSearchCV as SurpriseGridSearchCV
-from scipy.stats import randint
 from surprise import SVD, Dataset, Reader
 from sqlalchemy import create_engine
 import pickle
@@ -16,7 +12,6 @@ from datetime import datetime
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import normalize
 import sys
-import re 
 import re 
 
 # Set up logging
@@ -133,75 +128,6 @@ class MoodleRecommender:
         y = self.hybrid_data['interaction_count']
         self.hybrid_model.fit(X, y)
 
-    def tune_hyperparameters(self):
-        logging.info("Starting hyperparameter tuning")
-        self.tune_svd()
-        self.tune_random_forest()
-        self.tune_tfidf()
-    
-    def tune_svd(self):
-        param_grid = {
-            'n_factors': [50, 100, 150],
-            'n_epochs': [20, 30, 40],
-            'lr_all': [0.002, 0.005, 0.01],
-            'reg_all': [0.02, 0.05, 0.1]
-        }
-        
-        gs = SurpriseGridSearchCV(SVD, param_grid, measures=['rmse', 'mae'], cv=3)
-        gs.fit(self.cf_data)
-        
-        self.cf_model = gs.best_estimator['rmse']
-        self.cf_best_params = gs.best_params['rmse']
-        logging.info(f"Best SVD parameters: {self.cf_best_params}")
-
-    def custom_scorer(self, y_true, y_pred):
-        return -mean_squared_error(y_true, y_pred)  # Negative because GridSearchCV tries to maximize the score
-
-    def tune_random_forest(self):
-        param_distributions = {
-            'n_estimators': randint(100, 500),
-            'max_depth': randint(5, 50),
-            'min_samples_split': randint(2, 20),
-            'min_samples_leaf': randint(1, 10)
-        }
-        
-        X = self.hybrid_data[['cf_score', 'cb_score']]
-        y = self.hybrid_data['interaction_count']
-        
-        rs = RandomizedSearchCV(
-            RandomForestRegressor(), 
-            param_distributions, 
-            n_iter=20, 
-            cv=3, 
-            scoring=make_scorer(self.custom_scorer, greater_is_better=False)
-        )
-        rs.fit(X, y)
-        
-        self.hybrid_model = rs.best_estimator_
-        self.rf_best_params = rs.best_params_
-        logging.info(f"Best Random Forest parameters: {self.rf_best_params}")
-        logging.info(f"Best Random Forest score: {rs.best_score_}")
-    
-    def tune_tfidf(self):
-        param_grid = {
-            'max_df': [0.5, 0.75, 1.0],
-            'min_df': [1, 2, 3],
-            'ngram_range': [(1, 1), (1, 2)],
-            'stop_words': ['english', None]
-        }
-        
-        def custom_scorer(estimator, X):
-            return -estimator.fit(X).vocabulary_.__len__()
-        
-        tfidf = TfidfVectorizer()
-        gs = GridSearchCV(tfidf, param_grid, cv=3, scoring=make_scorer(custom_scorer, greater_is_better=False))
-        gs.fit(self.course_content['content'])
-        
-        self.content_vectorizer = gs.best_estimator_
-        self.tfidf_best_params = gs.best_params_
-        logging.info(f"Best TF-IDF parameters: {self.tfidf_best_params}")
-        logging.info(f"Resulting vocabulary size: {-custom_scorer(self.content_vectorizer, self.course_content['content'])}")
-    
     def get_content_based_recommendations(self, user_id, n=10):
         # Get content-based recommendations
         user_interactions = self.user_content_interactions[self.user_content_interactions['userid'] == user_id]
@@ -326,8 +252,8 @@ class MoodleRecommender:
             {'content_id': 3, 'score': 0.8, 'type': 'resource', 'title': 'Default Course 3', 'description': 'This is a third default recommendation'}
         ])
 
+
     def train_models(self):
-        self.tune_hyperparameters()
         self.train_cf_model()
         self.train_cb_model()
         self.train_hybrid_model()
@@ -342,10 +268,7 @@ class MoodleRecommender:
                 'hybrid_model': self.hybrid_model,
                 'course_content': self.course_content, 
                 'content_vector_dict': self.content_vector_dict,  
-                'user_content_interactions': self.user_content_interactions,
-                'cf_best_params': self.cf_best_params,
-                'rf_best_params': self.rf_best_params,
-                'tfidf_best_params': self.tfidf_best_params
+                'user_content_interactions': self.user_content_interactions
             }, f)
 
     def load_model(self, filename):
@@ -359,15 +282,20 @@ class MoodleRecommender:
             self.course_content = data['course_content']
             self.content_vector_dict = data['content_vector_dict']
             self.user_content_interactions = data['user_content_interactions']
-            self.cf_best_params = data['cf_best_params']
-            self.rf_best_params = data['rf_best_params']
-            self.tfidf_best_params = data['tfidf_best_params']
             
-            logging.info(f"Loaded models with best parameters:")
-            logging.info(f"CF model: {self.cf_best_params}")
-            logging.info(f"Hybrid model: {self.rf_best_params}")
-            logging.info(f"TF-IDF vectorizer: {self.tfidf_best_params}")
-            
+            # Set content_vector_size based on the loaded data
+            if self.content_vectors is not None:
+                self.content_vector_size = self.content_vectors.shape[1]
+            elif self.content_vector_dict:
+                self.content_vector_size = len(next(iter(self.content_vector_dict.values())))
+            else:
+                logging.warning("Unable to determine content_vector_size from loaded data")
+                self.content_vector_size = None
+
+        logging.info(f"Loaded course content with {len(self.course_content)} items")
+        logging.info(f"Loaded user interactions with {len(self.user_content_interactions)} items")
+        logging.info(f"Content vector size: {self.content_vector_size}")
+
 def get_db_connection():
     # Read Moodle config.php
     with open('/var/www/html/config.php', 'r') as file:
@@ -386,10 +314,10 @@ if __name__ == "__main__":
     recommender = MoodleRecommender(engine)
     
     if len(sys.argv) > 1 and sys.argv[1] == "update":
-        logging.info("Starting model update with hyperparameter tuning")
+        logging.info("Starting model update")
         recommender.load_data()
         recommender.preprocess_data()
-        recommender.train_models() 
+        recommender.train_models()
         recommender.save_model('moodle_recommender_model.pkl')
         logging.info(f"Model updated and saved successfully. Course content size: {len(recommender.course_content)}")
         print(f"Model file size: {os.path.getsize('moodle_recommender_model.pkl')} bytes")
