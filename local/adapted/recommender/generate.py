@@ -10,11 +10,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Database configuration
-DB_NAME = os.getenv('DB_NAME', 'moodle')
-DB_USER = os.getenv('DB_USER', 'moodle')
-DB_PASSWORD = os.getenv('DB_PASSWORD', 'moodlepass')
-DB_HOST = os.getenv('DB_HOST', 'localhost')
-DB_PORT = os.getenv('DB_PORT', '5432')
+# DB_NAME = os.getenv('DB_NAME', 'DB_NAME')
+# DB_USER = os.getenv('DB_USER', 'DB_USER')
+# DB_PASSWORD = os.getenv('DB_PASSWORD', 'DB_PASSWORD')
+# DB_HOST = os.getenv('DB_HOST', 'DB_HOST')
+# DB_PORT = os.getenv('DB_PORT', '5432')
 
 # Create a connection to the database
 engine = create_engine(f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}')
@@ -118,7 +118,7 @@ def generate_logs(num_logs, users, courses, content_ids):
     start_date = datetime.now() - timedelta(days=365)
     
     for user in users.itertuples():
-        num_user_logs = random.randint(10, 100)  # Vary number of logs per user
+        num_user_logs = random.randint(10, 100)
         user_courses = random.sample(courses.index.tolist(), k=min(5, len(courses)))
         
         for _ in range(num_user_logs):
@@ -164,7 +164,7 @@ def main():
     
     content_ids = resources['id'].tolist() + pages['id'].tolist()
     
-    logs = generate_logs(0, users, courses, content_ids)  # We'll generate logs based on users
+    logs = generate_logs(0, users, courses, content_ids) 
 
     # Save data to database
     users.to_sql('mdl_user', engine, if_exists='append', index=False)

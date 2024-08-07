@@ -18,6 +18,7 @@ $string['multimodal_generation'] = 'Multimodal Content Generation';
 $string['upload_content'] = 'Upload Content';
 $string['generate_audio'] = 'Generate Audio';
 $string['generate_slides'] = 'Generate Slides';
+$string['generate_video'] = 'Generate Video';
 $string['convert'] = 'Convert';
 $string['content_generated_success'] = 'Content generated successfully!';
 $string['download_audio'] = 'Download Audio';

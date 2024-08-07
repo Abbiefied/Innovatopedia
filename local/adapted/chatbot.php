@@ -15,13 +15,9 @@ header('Content-Type: application/json');
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
 
-    // Debugging: Check the received input
-    error_log('Received input: ' . print_r($input, true));
-
     $message = $input['message'] ?? '';
     $username = $input['username'] ?? '';
     $context = $input['context'] ?? [];
-    
 
     // Validate input
     if (empty($message)) {

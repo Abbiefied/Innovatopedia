@@ -31,6 +31,7 @@ services:
       - ./moodle_themes/adaptable:/var/www/html/theme/adaptable
       - ./local/adapted:/var/www/html/local/adapted
       - ./blocks/multimodal_generator:/var/www/html/blocks/multimodal_generator
+      - shared_temp:/var/www/moodledata/temp/multimodal_files
     networks:
       - moodle_network
   
@@ -71,6 +72,7 @@ services:
       - ./local/adapted/multimodal:/app/multimodal
       - ./config.php:/var/www/html/config.php
       - model_cache:/app/multimodal/model_cache
+      - shared_temp:/var/www/moodledata/temp/multimodal_files
     ports:
       - "5001:5001"
     restart: always
@@ -105,6 +107,7 @@ volumes:
   pgdata:
   moodledata:
   model_cache:
+  shared_temp:
 
 networks:
   moodle_network:

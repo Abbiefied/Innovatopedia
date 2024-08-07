@@ -12,7 +12,6 @@ $courseid = optional_param('courseid', 0, PARAM_INT);
 error_log("multimodal_generation.php called");
 
 // Function to handle AJAX requests
-
 function handle_ajax_request() {
     global $DB, $USER;
 
@@ -49,7 +48,6 @@ function handle_ajax_request() {
         $job_details->userid = $USER->id;
 
         // Insert the record and get the generated job_id
-
         $job_id = $DB->insert_record('local_adapted_jobs', $job_details);
 
         error_log("Job created with ID: " . $job_id);
@@ -112,7 +110,7 @@ function handle_ajax_request() {
                 'success' => true,
                 'progress' => $job_details->progress,
                 'files' => json_decode($job_details->files, true),
-                'status' => $job_details->progress < 40 ? 'Generating audio' : ($job_details->progress == 40 ? 'Generating slides' : ($job_details->progress > 40 ? 'Generating video' : 'Complete'))
+                'status' => $job_details->progress < 26 ? 'Generating audio' : ($job_details->progress == 26 ? 'Generating slides' : ($job_details->progress == 66 ? 'Generating video' : 'Complete'))
             ];
             error_log("Job progress: " . $job_details->progress);
         } else {
@@ -138,7 +136,7 @@ if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQ
     die();
 }
 
-// If it's not an AJAX request, render the page as before
+// If it's not an AJAX request, render the page
 if ($courseid) {
     require_login($courseid);
     $context = context_course::instance($courseid);

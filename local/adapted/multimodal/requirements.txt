@@ -6,5 +6,8 @@ python-pptx==0.6.19
 moviepy==1.0.3
 numpy==1.21.2
 sqlalchemy
-moodleapi
 requests
+psycopg2-binary
+Pillow 
+openai
+opencv-python
