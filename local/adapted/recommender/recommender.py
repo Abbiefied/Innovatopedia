@@ -7,7 +7,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.metrics import mean_squared_error, make_scorer
 from surprise.model_selection import GridSearchCV as SurpriseGridSearchCV
-from scipy.stats import randint, uniform
+from scipy.stats import randint
 from surprise import SVD, Dataset, Reader
 from sqlalchemy import create_engine
 import pickle
@@ -16,6 +16,7 @@ from datetime import datetime
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import normalize
 import sys
+import re 
 import re 
 
 # Set up logging
@@ -190,8 +191,6 @@ class MoodleRecommender:
         }
         
         def custom_scorer(estimator, X):
-            # This scorer returns the negative of the number of features (vocabulary size)
-            # We use negative because GridSearchCV tries to maximize the score
             return -estimator.fit(X).vocabulary_.__len__()
         
         tfidf = TfidfVectorizer()

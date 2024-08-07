@@ -9,6 +9,7 @@ M.local_adapted.init = function(Y, courseid) {
 $(document).ready(function() {
     var conversionInProgress = false;
 
+    //Handle Form submission
     $('#multimodal-form').on('submit', function(e) {
         e.preventDefault();
         if (conversionInProgress) {
@@ -54,6 +55,7 @@ $(document).ready(function() {
         });
     });
 
+    //Poll Progress
     function pollProgress(jobId) {
         $.ajax({
             url: M.cfg.wwwroot + '/local/adapted/multimodal/multimodal_generation.php',
@@ -74,9 +76,11 @@ $(document).ready(function() {
                     $('#progress-bar').width(response.progress + '%').text(response.progress + '%');
                     
                     if (response.progress < 26) {
+                    if (response.progress < 26) {
                         $('#progress-status').text('Generating audio...');
                     } else if (response.progress == 26) {
                         $('#progress-status').text('Generating slides... This may take several minutes.');
+                    } else if (response.progress == 66) {
                     } else if (response.progress == 66) {
                         $('#progress-status').text('Generating video...');
                     }
@@ -98,6 +102,7 @@ $(document).ready(function() {
         });
     }
 
+    //Update UI after conversion is complete
     function conversionComplete(response) {
         console.log("Conversion complete. Response:", response);
         $('#progress-container').hide();
@@ -107,8 +112,8 @@ $(document).ready(function() {
         if (response.file_urls && response.file_urls.length > 0) {
             console.log("File URLs found:", response.file_urls);
             var fileList = '';
-            response.file_urls.forEach(function(file) {
-                fileList += '<li><a href="' + file.url + '" target="_blank">' + file.name + '</a></li>';
+            response.file_urls.forEach(function(url, index) {
+                fileList += '<li><a href="' + url + '" target="_blank">File ' + (index + 1) + '</a></li>';
             });
             $('#result-files').html('<ul>' + fileList + '</ul>');
             $('#result-links').show();
@@ -128,6 +133,7 @@ $(document).ready(function() {
         conversionInProgress = false;
     }
 
+    //Handle Error
     function handleError(message) {
         $('#progress-container').hide();
         $('#status-message').html(message).show();
@@ -135,6 +141,7 @@ $(document).ready(function() {
         conversionInProgress = false;
     }
 
+    //Handle Upload button
     $('#upload-btn').on('click', function() {
         var jobId = $(this).attr('data-job-id');
         console.log('Button data-job-id:', jobId);
@@ -157,7 +164,7 @@ $(document).ready(function() {
             success: function(response) {
                 console.log('Success response:', response);
                 if (response.success) {
-                    $('#status-message').html(response.message).show();
+                    $('#status-message').html('Files uploaded successfully. Check the course page to see the new resources.').show();
                 } else {
                     $('#status-message').html('Upload failed: ' + response.message).show();
                 }

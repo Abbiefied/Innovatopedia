@@ -40,7 +40,7 @@ class ChatbotTest extends TestCase
     {
         parent::setUp();
 
-        // Define MOODLE_INTERNAL if not already defined
+        // Define MOODLE_INTERNAL
         if (!defined('MOODLE_INTERNAL')) {
             define('MOODLE_INTERNAL', true);
         }
@@ -48,7 +48,7 @@ class ChatbotTest extends TestCase
         // Mock global $CFG object
         global $CFG;
         $CFG = new stdClass();
-        $CFG->dirroot = __DIR__ . '/..'; // Adjust this path as needed
+        $CFG->dirroot = __DIR__ . '/..';
         $CFG->wwwroot = 'http://example.com/moodle';
         $CFG->dataroot = __DIR__ . '/moodledata';
         $CFG->prefix = 'mdl_';
@@ -61,10 +61,10 @@ class ChatbotTest extends TestCase
         // Mock common Moodle functions
         $this->mockMoodleFunctions();
 
-        // Include your chatbot file
+        // Include chatbot file
         require_once($CFG->dirroot . '/local/adapted/chatbot.php');
 
-        // Instantiate your chatbot class
+        // Instantiate chatbot class
         $this->chatbot = new local_adapted_chatbot();
     }
 
@@ -118,14 +118,14 @@ class ChatbotTest extends TestCase
         // Mock isloggedin function
         if (!function_exists('isloggedin')) {
             function isloggedin() {
-                return true; // Simulate a logged-in user
+                return true; 
             }
         }
 
         // Mock isguestuser function
         if (!function_exists('isguestuser')) {
             function isguestuser() {
-                return false; // Simulate that the user is not a guest
+                return false;
             }
         }
 
@@ -184,7 +184,7 @@ class ChatbotTest extends TestCase
             'summary' => 'An introductory course to CS'
         ]);
 
-        // Use reflection to access the private method
+        // Reflection to access the private method
         $reflection = new ReflectionClass($this->chatbot);
         $method = $reflection->getMethod('call_moodle_function');
         $method->setAccessible(true);

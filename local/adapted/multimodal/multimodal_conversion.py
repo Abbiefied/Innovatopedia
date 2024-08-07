@@ -2,9 +2,8 @@ import sys
 from gtts import gTTS
 from transformers import pipeline, AutoTokenizer, AutoModelForSeq2SeqLM 
 from PIL import Image, ImageDraw, ImageFont
-from moviepy.editor import VideoFileClip, AudioFileClip, CompositeVideoClip, TextClip
+from moviepy.editor import VideoFileClip, AudioFileClip
 from pptx import Presentation
-from pptx.util import Inches
 import cv2
 import numpy as np
 import logging
@@ -13,8 +12,6 @@ import tempfile
 import textwrap
 import requests
 from io import BytesIO
-import random
-from typing import List, Tuple
 from openai import OpenAI
 
 
@@ -24,14 +21,17 @@ logging.basicConfig(level=logging.DEBUG)
 # Set the model cache directory
 os.environ['TRANSFORMERS_CACHE'] = '/app/multimodal/bart-large-cnn'
 
+#Generate Audio
 def convert_text_to_audio(text, audio_file):
     logging.debug("Starting audio conversion")
     tts = gTTS(text=text, lang='en')
     tts.save(audio_file)
 
+#Generate Slides
 def generate_slides_from_text(text, slides_file):
     logging.debug("Starting slides conversion")
     
+    model_path = '/app/multimodal/bart-large-cnn'   
     model_path = '/app/multimodal/bart-large-cnn'   
     try:
         logging.debug(f"Current working directory: {os.getcwd()}")
@@ -45,6 +45,9 @@ def generate_slides_from_text(text, slides_file):
         
         summarizer = pipeline("summarization", model=model, tokenizer=tokenizer)
         
+        # Split the text into chunks
+        max_chunk_length = 1000  
+        text_chunks = textwrap.wrap(text, max_chunk_length)
         # Split the text into chunks
         max_chunk_length = 1000  
         text_chunks = textwrap.wrap(text, max_chunk_length)
@@ -66,15 +69,17 @@ def generate_slides_from_text(text, slides_file):
         prs.save(slides_file)
         logging.debug("Slides generated successfully")
         return [summarizer(chunk, max_length=100, min_length=30, do_sample=False)[0]['summary_text'] for chunk in text_chunks]  # Return the summaries
+        return [summarizer(chunk, max_length=100, min_length=30, do_sample=False)[0]['summary_text'] for chunk in text_chunks]  # Return the summaries
     except Exception as e:
         logging.error(f"Error in generate_slides: {str(e)}")
         logging.error(f"Current working directory: {os.getcwd()}")
         raise    
+        raise    
     
-# Set up OpenAI API key
+# Set up OpenAI API key for DALL-E
+client = OpenAI(api_key =os.environ.get("OPENAI_API_KEY"))
 
-client = OpenAI(api_key =os.getenv("OPENAI_API_KEY"))
-
+#Generate Image
 def generate_image(prompt):
     try:
         response = client.images.generate(
@@ -93,6 +98,7 @@ def generate_image(prompt):
         logging.error(f"Error generating image: {str(e)}")
         return None
     
+#Generate Video    
 def generate_video_from_text(text, audio_file, video_file):
     logging.debug("Starting video conversion")
     
@@ -108,17 +114,45 @@ def generate_video_from_text(text, audio_file, video_file):
     with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as temp_file:
         temp_video_file = temp_file.name
 
+
+    # Load audio file and get its duration
+    audio = AudioFileClip(audio_file)
+    duration = audio.duration
+
+    # Create a temporary file
+    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as temp_file:
+        temp_video_file = temp_file.name
+
     # Create a VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(temp_video_file, fourcc, fps, (width, height))
+
     out = cv2.VideoWriter(temp_video_file, fourcc, fps, (width, height))
 
     # Create a black background image
     background = np.zeros((height, width, 3), dtype=np.uint8)
 
+
     try:
-        font = ImageFont.truetype("arial.ttf", 40)
+        font = ImageFont.truetype("arial.ttf", 50)
     except IOError:
         font = ImageFont.load_default()
+
+    # Wrap text to fit screen width
+    wrapped_lines = textwrap.wrap(text, width=40)
+    total_lines = len(wrapped_lines)
+    line_duration = duration / total_lines
+
+    # Generate an image for every 5 lines of text
+    images = []
+    for i in range(0, total_lines, 5):
+        image_prompt = " ".join(wrapped_lines[i:i+5])
+        img = generate_image(image_prompt)
+        if img:
+            img = img.resize((width // 2, height // 2))
+            images.append(img)
+
+    for frame in range(int(fps * duration)):
 
     # Wrap text to fit screen width
     wrapped_lines = textwrap.wrap(text, width=40)

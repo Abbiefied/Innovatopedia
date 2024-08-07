@@ -4,15 +4,13 @@
 /.venv
 /.vscode
 /.cache
-/moodle-themes
 /volumes
-/local/adapted/classes - Shortcut.lnk
 /log
-/local/adapted/multimodal/bart-large-cnn
 /local/adapted/multimodal/__pycache__
 /composer.json
 /composer.lock
 .env
+# /local/adapted/multimodal/bart-large-cnn
 
 
 # testing
