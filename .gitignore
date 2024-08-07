@@ -10,7 +10,7 @@
 /composer.json
 /composer.lock
 .env
-# /local/adapted/multimodal/bart-large-cnn
+/local/adapted/multimodal/bart-large-cnn
 
 
 # testing
