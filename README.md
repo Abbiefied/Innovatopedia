@@ -26,7 +26,7 @@ The system is containerized using Docker and orchestrated with Docker Compose. I
 
 1. Ensure you have Docker and Docker Compose installed on your system.
 2. Clone this repository.
-3. Download required AI models by running python download_models.py in the `multimodal` directory
+3. Download required AI models by running `python download_models.py` in the `multimodal` directory
 4. Configure the necessary environment variables in `docker-compose.yaml`.
 5. Run `docker-compose up -d` to start all services.
 
