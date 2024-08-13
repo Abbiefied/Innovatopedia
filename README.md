@@ -58,9 +58,9 @@ The chatbot is accessible within the Moodle interface and can answer questions a
 - The project uses Python for backend services and PHP for Moodle customizations.
 - Machine learning models (SVD, TF-IDF, Random Forest) are used for content recommendations.
 - Natural language processing techniques are employed for the chatbot and content summarization.
-- The `facebook/bart-large-cnn` model is used for text summarization.
+- The `facebook/bart-large-cnn` model from `HuggingFace Transformers` is used for text summarization.
 
 ## Contact
 
-[Your contact information or where to report issues]
+Contact the developer at [g.adekunle@alustudent.com] for more information
 
