@@ -59,8 +59,11 @@ The chatbot is accessible within the Moodle interface and can answer questions a
 - Machine learning models (SVD, TF-IDF, Random Forest) are used for content recommendations.
 - Natural language processing techniques are employed for the chatbot and content summarization.
 - The `facebook/bart-large-cnn` model from `HuggingFace Transformers` is used for text summarization.
+  
+## Demo and Technical Report Link
+[https://drive.google.com/drive/folders/1SEWC0ZnexTZloKIOm0KoQXDklZoXF-7V?usp=drive_link]
 
 ## Contact
 
-Contact the developer at [g.adekunle@alustudent.com] for more information
+Contact the developer at [g.adekunle@alumni.alueducation.com] for more information
 
