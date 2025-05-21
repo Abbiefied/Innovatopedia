@@ -1,10 +1,10 @@
  # Innovatopedia: Moodle Enhanced Learning Platform
 
-This project enhances the Moodle Learning Management System with advanced features including content recommendations, multimodal content generation, and an AI-powered chatbot by integrating the AdaptED Plugin.
+This project enhances the Moodle Learning Management System with advanced features, including content recommendations, multimodal content generation, and an AI-powered chatbot by integrating the AdaptED Plugin.
 
 ## Features
 
-- **Recommender System:** Provides personalized content recommendations using a hybrid approach combining collaborative filtering, content-based filtering and score boosting.
+- **Recommender System:** Provides personalized content recommendations using a hybrid approach combining collaborative filtering, content-based filtering, and score boosting.
 - **Multimodal Content Generation:**
   - Convert text to audio
   - Generate presentation slides from text
@@ -65,5 +65,5 @@ The chatbot is accessible within the Moodle interface and can answer questions a
 
 ## Contact
 
-Contact the developer at [g.adekunle@alumni.alueducation.com] for more information
+Contact the developer at [ganiyatadekunle165@gmail.com] for more information
 
